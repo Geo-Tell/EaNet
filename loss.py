@@ -47,34 +47,34 @@ class ECELoss(nn.Module):
         self.alpha = alpha
         self.radius = radius
         self.beta = beta
-        
+
         if mode == 'ohem':
             self.criteria = OhemCELoss(thresh, n_min, ignore_lb=ignore_lb)
         elif mode == 'ce':
             self.criteria = nn.CrossEntropyLoss(ignore_index=ignore_lb)
         else:
             raise Exception('No %s loss, plase choose form ohem and ce' % mode)
-            
+
         self.edge_criteria = EdgeLoss(self.n_classes, self.alpha, self.radius)
-        
-        
+
+
     def forward(self, logits, labels):
         if self.beta > 0:
             return self.criteria(logits, labels) + self.beta*self.edge_criteria(logits, labels)
         else:
             return self.criteria(logits, labels)
-    
+
 class EdgeLoss(nn.Module):
     def __init__(self, n_classes=19, radius=1, alpha=1):
         super(EdgeLoss, self).__init__()
         self.n_classes = n_classes
         self.radius = radius
         self.alpha = alpha
-        
-        
+
+
     def forward(self, logits, label):
         prediction = F.softmax(logits, dim=1)
-        ks = 2 * self.radius
+        ks = 2 * self.radius + 1
         filt1 = torch.ones(1, 1, ks, ks)
         filt1[:, :, self.radius:2*self.radius, self.radius:2*self.radius] = -8
         filt1.requires_grad = False
@@ -82,31 +82,31 @@ class EdgeLoss(nn.Module):
         label = label.unsqueeze(1)
         lbedge = F.conv2d(label.float(), filt1, bias=None, stride=1, padding=self.radius)
         lbedge = 1 - torch.eq(lbedge, 0).float()
-        
+
         filt2 = torch.ones(self.n_classes, 1, ks, ks)
         filt2[:, :, self.radius:2*self.radius, self.radius:2*self.radius] = -8
         filt2.requires_grad = False
         filt2 = filt2.cuda()
         prededge = F.conv2d(prediction.float(), filt2, bias=None,
                             stride=1, padding=self.radius, groups=self.n_classes)
-        
+
         norm = torch.sum(torch.pow(prededge,2), 1).unsqueeze(1)
         prededge = norm/(norm + self.alpha)
-        
-        
+
+
         # mask = lbedge.float()
         # num_positive = torch.sum((mask==1).float()).float()
         # num_negative = torch.sum((mask==0).float()).float()
 
         # mask[mask == 1] = 1.0 * num_negative / (num_positive + num_negative)
         # mask[mask == 0] = 1.5 * num_positive / (num_positive + num_negative)
-    
+
         # cost = torch.nn.functional.binary_cross_entropy(
             # prededge.float(),lbedge.float(), weight=mask, reduce=False)
         # return torch.mean(cost)
         return BinaryDiceLoss()(prededge.float(),lbedge.float())
-    
-    
+
+
 class BinaryDiceLoss(nn.Module):
     """Dice loss of binary class
     Args:
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     #criteria2 = OhemCELoss(thresh=0.7, n_min=16*20*20//16).cuda()
     criteria1 = ECELoss(thresh=0.7, n_min=16*20*20//16).cuda()
     criteria2 = ECELoss(thresh=0.7, n_min=16*20*20//16).cuda()
-    
+
     net1 = nn.Sequential(
         nn.Conv2d(3, 19, kernel_size=3, stride=2, padding=1),
     )
