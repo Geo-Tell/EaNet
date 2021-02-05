@@ -65,7 +65,7 @@ class ECELoss(nn.Module):
             return self.criteria(logits, labels)
 
 class EdgeLoss(nn.Module):
-    def __init__(self, n_classes=19, radius=1, alpha=1):
+    def __init__(self, n_classes=19, radius=1, alpha=0.01):
         super(EdgeLoss, self).__init__()
         self.n_classes = n_classes
         self.radius = radius

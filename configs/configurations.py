@@ -7,7 +7,7 @@ class Config(object):
         ## model and loss
         self.ignore_label = 255
         self.aspp_global_feature = True
-        self.alpha = 1
+        self.alpha = 0.01
         self.radius = 1
         self.beta = 0.5
         self.mode = 'ohem'
