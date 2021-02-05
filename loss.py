@@ -55,7 +55,7 @@ class ECELoss(nn.Module):
         else:
             raise Exception('No %s loss, plase choose form ohem and ce' % mode)
 
-        self.edge_criteria = EdgeLoss(self.n_classes, self.alpha, self.radius)
+        self.edge_criteria = EdgeLoss(self.n_classes, self.radius, self.alpha)
 
 
     def forward(self, logits, labels):
