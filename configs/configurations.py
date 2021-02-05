@@ -8,7 +8,7 @@ class Config(object):
         self.ignore_label = 255
         self.aspp_global_feature = True
         self.alpha = 0.01
-        self.radius = 1
+        self.radius = 1 # Recommended 1. Larger radius generates thicker edges
         self.beta = 0.5
         self.mode = 'ohem'
         ## dataset
